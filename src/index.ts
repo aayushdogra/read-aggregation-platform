@@ -31,7 +31,7 @@ const typeDefs = `#graphql
   }
 
   type PaymentSummary {
-    paymentId: ID!
+    id: ID!
     status: PaymentStatus!
     amount: Float!
     initiatedAt: DateTime!
@@ -39,28 +39,44 @@ const typeDefs = `#graphql
   }
 
   type RefundSummary {
-    refundId: ID!
+    id: ID!
     status: RefundStatus!
     amount: Float!
     initiatedAt: DateTime!
     completedAt: DateTime
   }
 
+  type HotelSummary {
+    id: ID!
+    name: String!
+    rating: Float!
+    city: String!
+  }
+
   type BookingSummary {
-    bookingId: ID!
-    hotelName: String!
+    id: ID!
+    hotel: HotelSummary!
     roomType: RoomType!
     nights: Int!
     status: BookingStatus!
-    createdAt: String!
+    createdAt: DateTime!
     payment: PaymentSummary
     refund: RefundSummary
+  }
+
+  type UserProfile {
+    id: ID!
+    name: String!
+    totalBookings: Int!
+    activeBookings: Int!
+    recentBookings: [BookingSummary!]!
   }
 
   type Query {
     health: String!
     booking(id: ID!): BookingSummary
     bookingsByUser(userId: ID!): [BookingSummary!]!
+    userProfile(userId: ID!): UserProfile
   }
 `;
 
