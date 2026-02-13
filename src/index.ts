@@ -1,6 +1,41 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 
+// Mock Data
+const mockBookings = [
+  {
+    id: "1",
+    hotel: {
+      id: "h1",
+      name: "Taj Palace",
+      rating: 4.7,
+      city: "Delhi",
+    },
+    roomType: "DELUXE",
+    nights: 3,
+    status: "CONFIRMED",
+    createdAt: new Date().toISOString(),
+    payment: null,
+    refund: null,
+  },
+  {
+    id: "2",
+    hotel: {
+      id: "h2",
+      name: "Oberoi",
+      rating: 4.9,
+      city: "Mumbai",
+    },
+    roomType: "SINGLE",
+    nights: 2,
+    status: "CREATED",
+    createdAt: new Date().toISOString(),
+    payment: null,
+    refund: null,
+  },
+];
+
+// GraphQL Schema
 const typeDefs = `#graphql
   scalar DateTime
 
@@ -80,14 +115,23 @@ const typeDefs = `#graphql
   }
 `;
 
+// Resolvers
 const resolvers = {
   Query: {
     health: () => "OK",
-    booking: () => null,
+
+    booking: (_parent: unknown, args: { id: string }) => {
+      const booking = mockBookings.find((b) => b.id === args.id);
+      return booking || null;
+    },
+
     bookingsByUser: () => [],
+
+    userProfile: (_parent: unknown, args: { userId: string }) => null,
   },
 };
 
+// Server Bootstrap
 const server = new ApolloServer({
   typeDefs,
   resolvers,
