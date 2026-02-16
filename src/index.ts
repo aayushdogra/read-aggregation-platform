@@ -1,39 +1,11 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
-
-// Mock Data
-const mockBookings = [
-  {
-    id: "1",
-    hotel: {
-      id: "h1",
-      name: "Taj Palace",
-      rating: 4.7,
-      city: "Delhi",
-    },
-    roomType: "DELUXE",
-    nights: 3,
-    status: "CONFIRMED",
-    createdAt: new Date().toISOString(),
-    payment: null,
-    refund: null,
-  },
-  {
-    id: "2",
-    hotel: {
-      id: "h2",
-      name: "Oberoi",
-      rating: 4.9,
-      city: "Mumbai",
-    },
-    roomType: "SINGLE",
-    nights: 2,
-    status: "CREATED",
-    createdAt: new Date().toISOString(),
-    payment: null,
-    refund: null,
-  },
-];
+import {
+  getBookingById,
+  getBookingsByUser,
+} from "./services/bookingService.js";
+import { getPaymentByBookingId } from "./services/paymentService.js";
+import { getRefundByBookingId } from "./services/refundService.js";
 
 // GraphQL Schema
 const typeDefs = `#graphql
@@ -90,6 +62,7 @@ const typeDefs = `#graphql
 
   type BookingSummary {
     id: ID!
+    userId: ID!
     hotel: HotelSummary!
     roomType: RoomType!
     nights: Int!
@@ -99,19 +72,17 @@ const typeDefs = `#graphql
     refund: RefundSummary
   }
 
-  type UserProfile {
-    id: ID!
-    name: String!
+  type UserBookingSummary {
+    userId: ID!
     totalBookings: Int!
     activeBookings: Int!
-    recentBookings: [BookingSummary!]!
   }
 
   type Query {
     health: String!
     booking(id: ID!): BookingSummary
     bookingsByUser(userId: ID!): [BookingSummary!]!
-    userProfile(userId: ID!): UserProfile
+    userBookingSummary(userId: ID!): UserBookingSummary
   }
 `;
 
@@ -121,13 +92,38 @@ const resolvers = {
     health: () => "OK",
 
     booking: (_parent: unknown, args: { id: string }) => {
-      const booking = mockBookings.find((b) => b.id === args.id);
-      return booking || null;
+      return getBookingById(args.id);
     },
 
-    bookingsByUser: () => [],
+    bookingsByUser: (_parent: unknown, args: { userId: string }) => {
+      return getBookingsByUser(args.userId);
+    },
 
-    userProfile: (_parent: unknown, args: { userId: string }) => null,
+    userBookingSummary: (_parent: unknown, args: { userId: string }) => {
+      const userBookings = getBookingsByUser(args.userId);
+
+      const totalBookings = userBookings.length;
+
+      const activeBookings = userBookings.filter(
+        (b) => b.status === "CREATED" || b.status === "CONFIRMED",
+      ).length;
+
+      return {
+        userId: args.userId,
+        totalBookings,
+        activeBookings,
+      };
+    },
+  },
+
+  BookingSummary: {
+    payment: (parent: { id: string }) => {
+      return getPaymentByBookingId(parent.id);
+    },
+
+    refund: (parent: { id: string }) => {
+      return getRefundByBookingId(parent.id);
+    },
   },
 };
 
