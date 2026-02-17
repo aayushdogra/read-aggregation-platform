@@ -91,16 +91,39 @@ const resolvers = {
   Query: {
     health: () => "OK",
 
-    booking: (_parent: unknown, args: { id: string }) => {
-      return getBookingById(args.id);
+    booking: async (_parent: unknown, args: { id: string }) => {
+      const booking = await getBookingById(args.id);
+
+      if (!booking) return null;
+
+      // Temporary mapping for hotel object
+      return {
+        ...booking,
+        hotel: {
+          id: "temp-id",
+          name: booking.hotelName,
+          rating: 4.5,
+          city: "Unknown",
+        },
+      };
     },
 
-    bookingsByUser: (_parent: unknown, args: { userId: string }) => {
-      return getBookingsByUser(args.userId);
+    bookingsByUser: async (_parent: unknown, args: { userId: string }) => {
+      const bookings = await getBookingsByUser(args.userId);
+
+      return bookings.map((booking) => ({
+        ...booking,
+        hotel: {
+          id: "temp-id",
+          name: booking.hotelName,
+          rating: 4.5,
+          city: "Unknown",
+        },
+      }));
     },
 
-    userBookingSummary: (_parent: unknown, args: { userId: string }) => {
-      const userBookings = getBookingsByUser(args.userId);
+    userBookingSummary: async (_parent: unknown, args: { userId: string }) => {
+      const userBookings = await getBookingsByUser(args.userId);
 
       const totalBookings = userBookings.length;
 
