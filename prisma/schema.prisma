@@ -7,12 +7,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Hotel {
+  id        String   @id @default(uuid())
+  name      String
+  city      String
+  rating    Float
+  createdAt DateTime @default(now())
+
+  bookings  Booking[]
+}
+
 model Booking {
   id        String   @id @default(uuid())
   userId    String
-  hotelName String
+
+  hotelId   String
+  hotel     Hotel    @relation(fields: [hotelId], references: [id])
+
   roomType  String
   nights    Int
   status    String
   createdAt DateTime @default(now())
+
+  payment   Payment?
+  refunds   Refund[]
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  bookingId   String   @unique
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+
+  status      String
+  amount      Float
+  initiatedAt DateTime
+  completedAt DateTime?
+}
+
+model Refund {
+  id          String   @id @default(uuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+
+  status      String
+  amount      Float
+  initiatedAt DateTime
+  completedAt DateTime?
 }

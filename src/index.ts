@@ -4,8 +4,6 @@ import {
   getBookingById,
   getBookingsByUser,
 } from "./services/bookingService.js";
-import { getPaymentByBookingId } from "./services/paymentService.js";
-import { getRefundByBookingId } from "./services/refundService.js";
 
 // GraphQL Schema
 const typeDefs = `#graphql
@@ -69,7 +67,7 @@ const typeDefs = `#graphql
     status: BookingStatus!
     createdAt: DateTime!
     payment: PaymentSummary
-    refund: RefundSummary
+    refunds: [RefundSummary!]!
   }
 
   type UserBookingSummary {
@@ -87,42 +85,20 @@ const typeDefs = `#graphql
 `;
 
 // Resolvers
+
 const resolvers = {
   Query: {
     health: () => "OK",
 
-    booking: async (_parent: unknown, args: { id: string }) => {
-      const booking = await getBookingById(args.id);
-
-      if (!booking) return null;
-
-      // Temporary mapping for hotel object
-      return {
-        ...booking,
-        hotel: {
-          id: "temp-id",
-          name: booking.hotelName,
-          rating: 4.5,
-          city: "Unknown",
-        },
-      };
+    booking: async (_: unknown, args: { id: string }) => {
+      return getBookingById(args.id);
     },
 
-    bookingsByUser: async (_parent: unknown, args: { userId: string }) => {
-      const bookings = await getBookingsByUser(args.userId);
-
-      return bookings.map((booking) => ({
-        ...booking,
-        hotel: {
-          id: "temp-id",
-          name: booking.hotelName,
-          rating: 4.5,
-          city: "Unknown",
-        },
-      }));
+    bookingsByUser: async (_: unknown, args: { userId: string }) => {
+      return getBookingsByUser(args.userId);
     },
 
-    userBookingSummary: async (_parent: unknown, args: { userId: string }) => {
+    userBookingSummary: async (_: unknown, args: { userId: string }) => {
       const userBookings = await getBookingsByUser(args.userId);
 
       const totalBookings = userBookings.length;
@@ -140,17 +116,13 @@ const resolvers = {
   },
 
   BookingSummary: {
-    payment: (parent: { id: string }) => {
-      return getPaymentByBookingId(parent.id);
-    },
-
-    refund: (parent: { id: string }) => {
-      return getRefundByBookingId(parent.id);
-    },
+    hotel: (parent: any) => parent.hotel,
+    payment: (parent: any) => parent.payment,
+    refunds: (parent: any) => parent.refunds,
   },
 };
 
-// Server Bootstrap
+// Apollo Server
 const server = new ApolloServer({
   typeDefs,
   resolvers,
