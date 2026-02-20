@@ -4,11 +4,6 @@ import { prisma } from "../lib/prisma.js";
 export async function getBookingById(id: string) {
   return prisma.booking.findUnique({
     where: { id },
-    include: {
-      hotel: true,
-      payment: true,
-      refunds: true,
-    },
   });
 }
 
@@ -16,10 +11,5 @@ export async function getBookingById(id: string) {
 export async function getBookingsByUser(userId: string) {
   return prisma.booking.findMany({
     where: { userId },
-    include: {
-      hotel: true,
-      payment: true,
-      refunds: true,
-    },
   });
 }
